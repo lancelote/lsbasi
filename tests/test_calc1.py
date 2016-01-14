@@ -39,3 +39,6 @@ class TestInterpreter(unittest.TestCase):
     def test_incorrect_syntax_raises_error(self):
         self.assertRaises(Exception, Interpreter('3 -').expr)
         self.assertRaises(Exception, Interpreter('3 - a').expr)
+
+    def test_can_handle_arbitrary_sequence(self):
+        self.assertEqual(Interpreter('3 + 2 - 1 + 4').expr(), 8)

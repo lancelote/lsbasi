@@ -35,7 +35,7 @@ class Token(object):
 class Interpreter(object):
 
     def __init__(self, text):
-        self.text = text  # Client string input, ex. '3+5'
+        self.text = text  # Client string input, ex. '3 + 5', '6 + 2 - 3'
         self.pos = 0  # Index into self.text
         self.current_token = None
         self.current_char = self.text[self.pos]
@@ -100,6 +100,12 @@ class Interpreter(object):
         else:
             self.error()
 
+    def term(self):
+        """Return an INTEGER token value"""
+        token = self.current_token
+        self.eat(INTEGER)
+        return token.value
+
     def expr(self):
         """Parser / Interpreter
 
@@ -108,29 +114,16 @@ class Interpreter(object):
         """
         self.current_token = self.get_next_token()
 
-        # We expect the current_token to be a single-digit integer
-        left = self.current_token
-        self.eat(INTEGER)
+        result = self.term()
+        while self.current_token.type in (PLUS, MINUS):
+            token = self.current_token
+            if token.type == PLUS:
+                self.eat(PLUS)
+                result += self.term()
+            elif token.type == MINUS:
+                self.eat(MINUS)
+                result -= self.term()
 
-        # We expect the current_token to be a plus or minus operator
-        op = self.current_token
-        if op.type == PLUS:
-            self.eat(PLUS)
-        else:
-            self.eat(MINUS)
-
-        # We expect the current_token to be a single-digit integer
-        right = self.current_token
-        self.eat(INTEGER)
-        # After the above code the current_token is set to be EOF
-
-        # At this point INTEGER OP INTEGER sequence of tokens has been
-        # successfully found and the method can just return the result,
-        # thus effectively interpreting client input
-        if op.type == PLUS:
-            result = left.value + right.value
-        else:
-            result = left.value - right.value
         return result
 
 
