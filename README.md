@@ -1,3 +1,6 @@
+[![Requirements Status](https://requires.io/github/lancelote/lsbasi/requirements.svg?branch=master)](https://requires.io/github/lancelote/lsbasi/requirements/?branch=master)
+[![Build Status](https://travis-ci.org/lancelote/lsbasi.svg?branch=master)](https://travis-ci.org/lancelote/lsbasi)
+
 # lsbasi
 
 "[Let’s Build A Simple Interpreter](http://ruslanspivak.com/lsbasi-part1/)" tutorial by Ruslan Spivak code

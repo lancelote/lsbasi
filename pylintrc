@@ -1,0 +1,6 @@
+[MESSAGES CONTROL]
+disable=locally-disabled,missing-docstring
+
+[REPORTS]
+# Simplify pylint reports
+reports=no
