@@ -8,13 +8,14 @@ Simple calculator
 #
 # EOF (end-of-file) token is used to indicate that there is no more input left
 # for lexical analysis
-INTEGER, PLUS, MINUS, EOF = 'INTEGER', 'PLUS', 'MINUS', 'EOF'
+INTEGER, EOF = 'INTEGER', 'EOF'
+PLUS, MINUS, MUL, DIV = 'PLUS', 'MINUS', 'MUL', 'DIV'
 
 
 class Token(object):
 
     def __init__(self, token_type, value):
-        # Token types: INTEGER, PLUS, MINUS, EOF
+        # Token types
         self.type = token_type
         # Token values: [0-9], '+', '-' or None
         self.value = value
@@ -32,23 +33,21 @@ class Token(object):
         return self.__str__()
 
 
-class Interpreter(object):
-
+class Lexer(object):
     def __init__(self, text):
-        self.text = text  # Client string input, ex. '3 + 5', '6 + 2 - 3'
-        self.pos = 0  # Index into self.text
-        self.current_token = None
+        self.text = text  # Client string input
+        self.pos = 0      # Index into self.text
         self.current_char = self.text[self.pos]
 
     @staticmethod
     def error():
-        raise Exception('Error parsing input')
+        raise Exception('Invalid character')
 
     def advance(self):
         """Advance the `pos` pointer and set the `current_char` variable"""
         self.pos += 1
         if self.pos > len(self.text) - 1:
-            self.current_char = None  # Indicate EOF
+            self.current_char = None  # EOF
         else:
             self.current_char = self.text[self.pos]
 
@@ -68,7 +67,7 @@ class Interpreter(object):
         """Lexical analyzer (also known as scanner or tokenizer)
 
         This method is responsible for breaking a sentence apart into tokens.
-        One token at a time.
+        One token at a time
         """
         while self.current_char is not None:
 
@@ -87,21 +86,43 @@ class Interpreter(object):
                 self.advance()
                 return Token(MINUS, '-')
 
+            if self.current_char == '*':
+                self.advance()
+                return Token(MUL, '*')
+
+            if self.current_char == '/':
+                self.advance()
+                return Token(DIV, '/')
+
             self.error()
 
         return Token(EOF, None)
+
+
+class Interpreter(object):
+
+    def __init__(self, lexer):
+        self.lexer = lexer
+        self.current_token = self.lexer.get_next_token()  # First token
+
+    @staticmethod
+    def error():
+        raise Exception('Invalid syntax')
 
     def eat(self, token_type):
         # Compare the current token type with the passed token type and if
         # they match then "eat" the current token and assign the next token
         # to the self.current_token, otherwise raise the exception
         if self.current_token.type == token_type:
-            self.current_token = self.get_next_token()
+            self.current_token = self.lexer.get_next_token()
         else:
             self.error()
 
-    def term(self):
-        """Return an INTEGER token value"""
+    def factor(self):
+        """Return an INTEGER token value
+
+        factor : INTEGER
+        """
         token = self.current_token
         self.eat(INTEGER)
         return token.value
@@ -109,20 +130,25 @@ class Interpreter(object):
     def expr(self):
         """Parser / Interpreter
 
-        expr -> INTEGER PLUS INTEGER
-        expr -> INTEGER MINUS INTEGER
+        expr   : factor ((MUL | DIV) factor)*
+        factor : INTEGER
         """
-        self.current_token = self.get_next_token()
+        result = self.factor()
 
-        result = self.term()
-        while self.current_token.type in (PLUS, MINUS):
+        while self.current_token.type in (PLUS, MINUS, MUL, DIV):
             token = self.current_token
             if token.type == PLUS:
                 self.eat(PLUS)
-                result += self.term()
+                result += self.factor()
             elif token.type == MINUS:
                 self.eat(MINUS)
-                result -= self.term()
+                result -= self.factor()
+            elif token.type == MUL:
+                self.eat(MUL)
+                result *= self.factor()
+            elif token.type == DIV:
+                self.eat(DIV)
+                result //= self.factor()
 
         return result
 
@@ -135,7 +161,8 @@ def main():
             break
         if not text:
             continue
-        interpreter = Interpreter(text)
+        lexer = Lexer(text)
+        interpreter = Interpreter(lexer)
         result = interpreter.expr()
         print(result)
 
