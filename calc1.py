@@ -16,9 +16,7 @@ PLUS, MINUS, MUL, DIV = 'PLUS', 'MINUS', 'MUL', 'DIV'
 class Token(object):
 
     def __init__(self, token_type, value):
-        # Token types
         self.type = token_type
-        # Token values: [0-9], '+', '-' or None
         self.value = value
 
     def __str__(self):
@@ -128,28 +126,40 @@ class Interpreter(object):
         self.eat(INTEGER)
         return token.value
 
-    def expr(self):
-        """Parser / Interpreter
-
-        expr   : factor ((MUL | DIV) factor)*
-        factor : INTEGER
+    def term(self):
+        """
+        term : factor ((MUL | DIV) factor)*
         """
         result = self.factor()
 
-        while self.current_token.type in (PLUS, MINUS, MUL, DIV):
+        while self.current_token.type in (MUL, DIV):
             token = self.current_token
-            if token.type == PLUS:
-                self.eat(PLUS)
-                result += self.factor()
-            elif token.type == MINUS:
-                self.eat(MINUS)
-                result -= self.factor()
-            elif token.type == MUL:
+            if token.type == MUL:
                 self.eat(MUL)
                 result *= self.factor()
             elif token.type == DIV:
                 self.eat(DIV)
                 result //= self.factor()
+
+        return result
+
+    def expr(self):
+        """Parser / Interpreter
+
+        expr   : term ((PLUS | MINUS) term)*
+        term   : factor ((MUL | DIV) factor)*
+        factor : INTEGER
+        """
+        result = self.term()
+
+        while self.current_token.type in (PLUS, MINUS):
+            token = self.current_token
+            if token.type == PLUS:
+                self.eat(PLUS)
+                result += self.term()
+            elif token.type == MINUS:
+                self.eat(MINUS)
+                result -= self.term()
 
         return result
 

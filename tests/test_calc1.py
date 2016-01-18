@@ -52,3 +52,8 @@ class TestInterpreter(unittest.TestCase):
     def test_can_handle_arbitrary_sequence(self):
         self.assertEqual(Interpreter(Lexer('3 + 2 - 1 + 4')).expr(), 8)
         self.assertEqual(Interpreter(Lexer('6/2*3')).expr(), 9)
+
+    def test_can_handle_operator_precedence(self):
+        self.assertEqual(Interpreter(Lexer('6 - 4/2')).expr(), 4)
+        self.assertEqual(Interpreter(Lexer('2 + 8/2')).expr(), 6)
+        self.assertEqual(Interpreter(Lexer('14 + 2 * 3 - 6 / 2')).expr(), 17)
