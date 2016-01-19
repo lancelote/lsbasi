@@ -106,3 +106,7 @@ docs/_build/
 # PyBuilder
 target/
 
+### Custom
+
+# Training
+calc_custom.py

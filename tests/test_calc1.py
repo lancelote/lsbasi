@@ -57,3 +57,7 @@ class TestInterpreter(unittest.TestCase):
         self.assertEqual(Interpreter(Lexer('6 - 4/2')).expr(), 4)
         self.assertEqual(Interpreter(Lexer('2 + 8/2')).expr(), 6)
         self.assertEqual(Interpreter(Lexer('14 + 2 * 3 - 6 / 2')).expr(), 17)
+
+    def test_can_handle_parentheses(self):
+        self.assertEqual(Interpreter(Lexer('7 + 3*(6/(2 + 1))')).expr(), 13)
+        self.assertEqual(Interpreter(Lexer('7 + (((3 + 2)))')).expr(), 12)

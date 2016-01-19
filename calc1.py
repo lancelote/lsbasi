@@ -1,5 +1,5 @@
 # coding=utf-8
-# pylint: disable=too-few-public-methods
+# pylint: disable=too-few-public-methods,too-many-return-statements
 
 """
 Simple calculator
@@ -9,7 +9,7 @@ Simple calculator
 #
 # EOF (end-of-file) token is used to indicate that there is no more input left
 # for lexical analysis
-INTEGER, EOF = 'INTEGER', 'EOF'
+INTEGER, LPAREN, RPAREN, EOF = 'INTEGER', '(', ')', 'EOF'
 PLUS, MINUS, MUL, DIV = 'PLUS', 'MINUS', 'MUL', 'DIV'
 
 
@@ -93,6 +93,14 @@ class Lexer(object):
                 self.advance()
                 return Token(DIV, '/')
 
+            if self.current_char == '(':
+                self.advance()
+                return Token(LPAREN, '(')
+
+            if self.current_char == ')':
+                self.advance()
+                return Token(RPAREN, ')')
+
             self.error()
 
         return Token(EOF, None)
@@ -118,13 +126,19 @@ class Interpreter(object):
             self.error()
 
     def factor(self):
-        """Return an INTEGER token value
+        """Return an INTEGER, LPAREN or RPAREN token value
 
-        factor : INTEGER
+        factor : INTEGER | LPAREN expr RPAREN
         """
         token = self.current_token
-        self.eat(INTEGER)
-        return token.value
+        if token.type == INTEGER:
+            self.eat(INTEGER)
+            return token.value
+        elif token.type == LPAREN:
+            self.eat(LPAREN)
+            result = self.expr()
+            self.eat(RPAREN)
+            return result
 
     def term(self):
         """
