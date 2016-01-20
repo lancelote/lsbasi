@@ -5,11 +5,17 @@
 Simple calculator
 """
 
+###############################################################################
+#                                                                             #
+#  LEXER                                                                      #
+#                                                                             #
+###############################################################################
+
 # Token types
 #
 # EOF (end-of-file) token is used to indicate that there is no more input left
 # for lexical analysis
-INTEGER, LPAREN, RPAREN, EOF = 'INTEGER', '(', ')', 'EOF'
+INTEGER, LEFT_PAREN, RIGHT_PAREN, EOF = 'INTEGER', '(', ')', 'EOF'
 PLUS, MINUS, MUL, DIV = 'PLUS', 'MINUS', 'MUL', 'DIV'
 
 
@@ -40,7 +46,7 @@ class Lexer(object):
 
     @staticmethod
     def error():
-        raise Exception('Invalid character')
+        raise ValueError('Invalid character')
 
     def advance(self):
         """Advance the `pos` pointer and set the `current_char` variable"""
@@ -95,87 +101,156 @@ class Lexer(object):
 
             if self.current_char == '(':
                 self.advance()
-                return Token(LPAREN, '(')
+                return Token(LEFT_PAREN, '(')
 
             if self.current_char == ')':
                 self.advance()
-                return Token(RPAREN, ')')
+                return Token(RIGHT_PAREN, ')')
 
             self.error()
 
         return Token(EOF, None)
 
+###############################################################################
+#                                                                             #
+#  PARSER                                                                     #
+#                                                                             #
+###############################################################################
 
-class Interpreter(object):
+
+class AST(object):
+
+    pass
+
+
+class BinOp(AST):
+
+    def __init__(self, left, operator, right):
+        self.left = left
+        self.token = self.operator = operator
+        self.right = right
+
+
+class Num(AST):
+
+    def __init__(self, token):
+        self.token = token
+        self.value = token.value
+
+
+class Parser(object):
 
     def __init__(self, lexer):
         self.lexer = lexer
-        self.current_token = self.lexer.get_next_token()  # First token
+        self.current_token = self.lexer.get_next_token()
 
     @staticmethod
     def error():
-        raise Exception('Invalid syntax')
+        raise SyntaxError('Invalid syntax')
 
     def eat(self, token_type):
-        # Compare the current token type with the passed token type and if
-        # they match then "eat" the current token and assign the next token
-        # to the self.current_token, otherwise raise the exception
         if self.current_token.type == token_type:
             self.current_token = self.lexer.get_next_token()
         else:
             self.error()
 
     def factor(self):
-        """Return an INTEGER, LPAREN or RPAREN token value
-
-        factor : INTEGER | LPAREN expr RPAREN
-        """
+        """factor : INTEGER | LEFT_PAREN expr RIGHT_PAREN"""
         token = self.current_token
+
         if token.type == INTEGER:
             self.eat(INTEGER)
-            return token.value
-        elif token.type == LPAREN:
-            self.eat(LPAREN)
-            result = self.expr()
-            self.eat(RPAREN)
-            return result
+            return Num(token)
+        elif token.type == LEFT_PAREN:
+            self.eat(LEFT_PAREN)
+            node = self.expr()
+            self.eat(RIGHT_PAREN)
+            return node
+
+        self.error()
 
     def term(self):
-        """
-        term : factor ((MUL | DIV) factor)*
-        """
-        result = self.factor()
+        """term : factor ((MUL | DIV) factor)*"""
+        node = self.factor()
 
         while self.current_token.type in (MUL, DIV):
             token = self.current_token
             if token.type == MUL:
                 self.eat(MUL)
-                result *= self.factor()
             elif token.type == DIV:
                 self.eat(DIV)
-                result //= self.factor()
 
-        return result
+            node = BinOp(left=node, operator=token, right=self.factor())
+
+        return node
 
     def expr(self):
-        """Parser / Interpreter
-
+        """
         expr   : term ((PLUS | MINUS) term)*
         term   : factor ((MUL | DIV) factor)*
         factor : INTEGER
         """
-        result = self.term()
+        node = self.term()
 
         while self.current_token.type in (PLUS, MINUS):
             token = self.current_token
             if token.type == PLUS:
                 self.eat(PLUS)
-                result += self.term()
             elif token.type == MINUS:
                 self.eat(MINUS)
-                result -= self.term()
 
-        return result
+            node = BinOp(left=node, operator=token, right=self.term())
+
+        return node
+
+    def parse(self):
+        node = self.expr()
+        if self.current_token.type != EOF:
+            self.error()
+        return node
+
+
+###############################################################################
+#                                                                             #
+#  INTERPRETER                                                                #
+#                                                                             #
+###############################################################################
+
+
+class NodeVisitor(object):
+
+    def visit(self, node):
+        method_name = 'visit_' + type(node).__name__.lower()
+        visitor = getattr(self, method_name, self.generic_visit)
+        return visitor(node)
+
+    @staticmethod
+    def generic_visit(node):
+        raise AttributeError('No visit_%s method' % type(node).__name__.lower())
+
+
+class Interpreter(NodeVisitor):
+
+    def __init__(self, parser):
+        self.parser = parser
+
+    def visit_binop(self, node):
+        if node.operator.type == PLUS:
+            return self.visit(node.left) + self.visit(node.right)
+        elif node.operator.type == MINUS:
+            return self.visit(node.left) - self.visit(node.right)
+        elif node.operator.type == MUL:
+            return self.visit(node.left)*self.visit(node.right)
+        elif node.operator.type == DIV:
+            return self.visit(node.left)//self.visit(node.right)
+
+    @staticmethod
+    def visit_num(node):
+        return node.value
+
+    def interpret(self):
+        tree = self.parser.parse()
+        return self.visit(tree)
 
 
 def main():
@@ -187,8 +262,9 @@ def main():
         if not text:
             continue
         lexer = Lexer(text)
-        interpreter = Interpreter(lexer)
-        result = interpreter.expr()
+        parser = Parser(lexer)
+        interpreter = Interpreter(parser)
+        result = interpreter.interpret()
         print(result)
 
 if __name__ == '__main__':

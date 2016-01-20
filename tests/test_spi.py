@@ -1,0 +1,82 @@
+# coding=utf-8
+# pylint: disable=invalid-name
+
+import unittest
+
+from spi import Lexer, Parser, Interpreter, Token, INTEGER
+
+
+class TokenTest(unittest.TestCase):
+
+    def setUp(self):
+        self.token = Token(INTEGER, 1)
+
+    def test_str_method_returns_correct_result(self):
+        self.assertEqual(self.token.__str__(), 'Token(INTEGER, 1)')
+
+    def test_repr_method_returns_correct_result(self):
+        self.assertEqual(self.token.__repr__(), 'Token(INTEGER, 1)')
+
+
+class TestInterpreter(unittest.TestCase):
+
+    @staticmethod
+    def compute(task):
+        lexer = Lexer(task)
+        parser = Parser(lexer)
+        interpreter = Interpreter(parser)
+        result = interpreter.interpret()
+        return result
+
+    def test_can_handle_addition(self):
+        self.assertEqual(self.compute('1 + 2'), 3)
+        self.assertEqual(self.compute('3 + 1'), 4)
+
+    def test_can_handle_subtraction(self):
+        self.assertEqual(self.compute('1 - 2'), -1)
+        self.assertEqual(self.compute('1 - 1'), 0)
+        self.assertEqual(self.compute('5 - 2'), 3)
+
+    def test_can_multiplication(self):
+        self.assertEqual(self.compute('2*5'), 10)
+        self.assertEqual(self.compute('12*3'), 36)
+
+    def test_can_division(self):
+        self.assertEqual(self.compute('20/5'), 4)
+        self.assertEqual(self.compute('7/2'), 3)
+
+    def test_can_deal_with_multi_digit_numbers(self):
+        self.assertEqual(self.compute('43 - 21'), 22)
+        self.assertEqual(self.compute('1230 + 213'), 1443)
+
+    def test_can_handle_white_spaces(self):
+        self.assertEqual(self.compute('3-1'), 2)
+        self.assertEqual(self.compute('3    -  1'), 2)
+
+    def test_incorrect_syntax_raises_error(self):
+        self.assertRaises(SyntaxError, self.compute, '3 -')
+        self.assertRaises(SyntaxError, self.compute, '1 (1 + 2)')
+
+    def test_incorrect_characters_raises_error(self):
+        self.assertRaises(ValueError, self.compute, '3 - a')
+
+    def test_can_handle_arbitrary_sequence(self):
+        self.assertEqual(self.compute('3 + 2 - 1 + 4'), 8)
+        self.assertEqual(self.compute('6/2*3'), 9)
+
+    def test_can_handle_operator_precedence(self):
+        self.assertEqual(self.compute('6 - 4/2'), 4)
+        self.assertEqual(self.compute('2 + 8/2'), 6)
+        self.assertEqual(self.compute('14 + 2 * 3 - 6 / 2'), 17)
+
+    def test_can_handle_parentheses(self):
+        self.assertEqual(self.compute('7 + 3*(6/(2 + 1))'), 13)
+        self.assertEqual(self.compute('7 + (((3 + 2)))'), 12)
+        self.assertEqual(self.compute('7 + 3 * (10 / (12 / (3 + 1) - 1))'), 22)
+
+    def test_can_handle_odd_parentheses(self):
+        self.assertEqual(self.compute('7 + (((3 + 2)))'), 12)
+
+    def test_can_handle_long_task(self):
+        task = '7 + 3 * (10 / (12 / (3 + 1) - 1)) / (2 + 3) - 5 - 3 + (8)'
+        self.assertEqual(self.compute(task), 10)
