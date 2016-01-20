@@ -11,4 +11,4 @@ install:
 
 script:
   - py.test tests/
-  - pylint tests/ calc1.py  # Syntax validation
+  - pylint tests/ spi.py  # Syntax validation
