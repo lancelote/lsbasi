@@ -253,6 +253,76 @@ class Interpreter(NodeVisitor):
         return self.visit(tree)
 
 
+class Infix2PostfixTranslator(NodeVisitor):
+
+    def __init__(self, parser):
+        self.parser = parser
+
+    def visit_binop(self, node):
+        left = self.visit(node.left)
+        right = self.visit(node.right)
+        return '%s %s %s' % (left, right, node.operator.value,)
+
+    @staticmethod
+    def visit_num(node):
+        return node.value
+
+    def translate(self):
+        tree = self.parser.parse()
+        return self.visit(tree)
+
+
+class Infix2LispTranslator(NodeVisitor):
+
+    def __init__(self, parser):
+        self.parser = parser
+
+    def visit_binop(self, node):
+        left = self.visit(node.left)
+        right = self.visit(node.right)
+        return '(%s %s %s)' % (node.operator.value, left, right,)
+
+    @staticmethod
+    def visit_num(node):
+        return node.value
+
+    def translate(self):
+        tree = self.parser.parse()
+        return self.visit(tree)
+
+
+def infix2postfix(text):
+    """Translate task to postfix style notation
+
+    Args:
+        text (str): task "1 + 2"
+
+    Returns:
+        str: postfix style notation "1 2 +"
+    """
+    lexer = Lexer(text)
+    parser = Parser(lexer)
+    translator = Infix2PostfixTranslator(parser)
+    translation = translator.translate()
+    return translation
+
+
+def infix2lisp(text):
+    """Translate task to Lisp style notation
+
+    Args:
+        text (str): task "1 + 2"
+
+    Returns:
+        str: List style notation "(+ 1 2)"
+    """
+    lexer = Lexer(text)
+    parser = Parser(lexer)
+    translator = Infix2LispTranslator(parser)
+    translation = translator.translate()
+    return translation
+
+
 def main():
     while True:
         try:

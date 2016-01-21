@@ -4,6 +4,7 @@
 import unittest
 
 from spi import Lexer, Parser, Interpreter, Token, INTEGER
+from spi import infix2postfix, infix2lisp
 
 
 class TokenTest(unittest.TestCase):
@@ -80,3 +81,38 @@ class TestInterpreter(unittest.TestCase):
     def test_can_handle_long_task(self):
         task = '7 + 3 * (10 / (12 / (3 + 1) - 1)) / (2 + 3) - 5 - 3 + (8)'
         self.assertEqual(self.compute(task), 10)
+
+
+class TestInfix2Postfix(unittest.TestCase):
+
+    def test_returns_correct_result(self):
+        self.assertEqual(infix2postfix('2 + 3'), '2 3 +')
+
+    def test_can_deal_with_multiple_operators(self):
+        self.assertEqual(infix2postfix('2 + 3*5'), '2 3 5 * +')
+
+    def test_can_deal_with_parentheses(self):
+        task1 = '5 + ((1 + 2) * 4) - 3'
+        self.assertEqual(infix2postfix(task1), '5 1 2 + 4 * + 3 -')
+        task2 = '(5 + 3) * 12 / 3'
+        self.assertEqual(infix2postfix(task2), '5 3 + 12 * 3 /')
+
+
+class TestInfix2List(unittest.TestCase):
+
+    def test_returns_correct_result(self):
+        self.assertEqual(infix2lisp('1 + 2'), '(+ 1 2)')
+        self.assertEqual(infix2lisp('2*7'), '(* 2 7)')
+
+    def test_can_deal_with_multiple_operators(self):
+        self.assertEqual(infix2lisp('2*7 + 3'), '(+ (* 2 7) 3)')
+        self.assertEqual(infix2lisp('2 + 3*5'), '(+ 2 (* 3 5))')
+        self.assertEqual(infix2lisp('7 + 5*2 - 3'), '(- (+ 7 (* 5 2)) 3)')
+        task = '1 + 2 + 3 + 4 + 5'
+        self.assertEqual(infix2lisp(task), '(+ (+ (+ (+ 1 2) 3) 4) 5)')
+
+    def test_can_deal_with_parentheses(self):
+        task1 = '5 + ((1 + 2) * 4) - 3'
+        self.assertEqual(infix2lisp(task1), '(- (+ 5 (* (+ 1 2) 4)) 3)')
+        task2 = '(5 + 3) * 12 / 3'
+        self.assertEqual(infix2lisp(task2), '(/ (* (+ 5 3) 12) 3)')
