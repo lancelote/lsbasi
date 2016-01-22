@@ -132,7 +132,7 @@ class BinOp(AST):
 
 
 class UnaryOp(AST):
-    
+
     def __init__(self, operator, expression):
         self.token = self.operator = operator
         self.expression = expression
