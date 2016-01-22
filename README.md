@@ -13,4 +13,5 @@ tutorial by Ruslan Spivak code
  - [x] Part 5
  - [x] Part 6
  - [x] Part 7
- - [ ] Part 8
+ - [x] Part 8
+ - [ ] ...

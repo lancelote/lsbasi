@@ -82,6 +82,12 @@ class TestInterpreter(unittest.TestCase):
         task = '7 + 3 * (10 / (12 / (3 + 1) - 1)) / (2 + 3) - 5 - 3 + (8)'
         self.assertEqual(self.compute(task), 10)
 
+    def test_can_handle_unary_plus_and_minus(self):
+        self.assertEqual(self.compute('- 3'), -3)
+        self.assertEqual(self.compute('+ 3'), 3)
+        self.assertEqual(self.compute('5 - - - + - 3'), 8)
+        self.assertEqual(self.compute('5 - - - + - (3 + 4) - + 2'), 10)
+
 
 class TestInfix2Postfix(unittest.TestCase):
 
