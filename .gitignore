@@ -110,3 +110,7 @@ target/
 
 # Training
 calc_custom.py
+
+# Pascal binary files
+pascal/*
+!pascal/*.pas
